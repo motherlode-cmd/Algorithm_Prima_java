@@ -14,4 +14,5 @@ public abstract class Observable {
     public Observer getObserver() {
         return obs;
     }
+
 }

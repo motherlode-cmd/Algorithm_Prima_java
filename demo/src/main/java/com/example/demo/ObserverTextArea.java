@@ -2,7 +2,8 @@ package com.example.demo;
 
 import javafx.scene.control.TextArea;
 
-import java.io.IOException;
+
+
 
 public class ObserverTextArea implements Observer{
     private TextArea textArea = new TextArea();
@@ -15,4 +16,5 @@ public class ObserverTextArea implements Observer{
         if(textArea != null)
             textArea.setText(textArea.getText() + "\n[" + level.toString() + "]" + message);
     }
+
 }

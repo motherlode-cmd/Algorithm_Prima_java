@@ -53,11 +53,6 @@ public class RemoveController extends Observable implements Dialog{
             notify(Level.CLUE, "right all info");
             return;
         }
-        if(reader.getV1().equals(reader.getV2())){
-            notify(Level.ERROR, "Bad input");
-            notify(Level.CLUE, "make vertexes difference");
-            return;
-        }
         ((Stage) ((Node) event.getSource()).getScene().getWindow()).close();
     }
 

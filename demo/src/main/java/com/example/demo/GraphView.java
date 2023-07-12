@@ -1,14 +1,11 @@
 package com.example.demo;
 
-import javafx.beans.binding.Bindings;
 import javafx.scene.control.Label;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.paint.Color;
-import javafx.scene.paint.Paint;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
 
-import java.util.List;
 import java.util.Vector;
 
 public class GraphView extends Observable {
@@ -180,30 +177,50 @@ public class GraphView extends Observable {
         defaultColor();
         notify(Level.ERROR, "Remove no edge");
     }
-    public void primResult(String primRes)  {
-        String [] ost = primRes.split("\n");
-        for(int i = 0; i < ost.length; i++) {
-            String [] edge = ost[i].split("  ");
-            if(edge.length > 2)
-                colorEdge(edge[0], edge[1]);
+    public void colorResult(String primRes, Color color) {
+        try {
+            String[] ost = primRes.split("\n");
+            for (int i = 0; i < ost.length; i++) {
+                String[] edge = ost[i].split(" ");
+                if (edge.length > 1)
+                    colorEdge(edge[0], edge[1], color);
+            }
+        } catch (NullPointerException e) {
+            defaultColor();
         }
     }
 
-    private void colorEdge(String v1, String v2) {
+    public void colorVertexes(String vrt, Color color) {
+        try {
+            String[] ost = vrt.split(" ");
+            for (int i = 0; i < vertexes.size(); i++) {
+                for(int j = 0; j < ost.length; j++)
+                    if(vertexes.elementAt(i).getLabel().getText().equals(ost[j]))
+                        vertexes.elementAt(i).getVertex().setFill(color);
+            }
+        } catch (NullPointerException e) {
+            defaultColor();
+        }
+    }
+
+    private void colorEdge(String v1, String v2, Color color) {
         for(int i = 0; i < edges.size(); i++) {
             if(edges.elementAt(i).getFrom().toString().equals(v1) && edges.elementAt(i).getTo().toString().equals(v2) ||
                     edges.elementAt(i).getFrom().toString().equals(v2) && edges.elementAt(i).getTo().toString().equals(v1) ) {
-                edges.get(i).getEdge().setStroke(Color.ROSYBROWN);
+                edges.get(i).getEdge().setStroke(color);
                 edges.get(i).getLabel().setTextFill(Color.DARKSLATEBLUE);
             }
         }
     }
-    private void defaultColor() {
+    public void defaultColor() {
         for(int i = 0; i < edges.size(); i++) {
             if(edges.elementAt(i).getEdge() != null) {
                 edges.get(i).getEdge().setStroke(Color.BLACK);
                 edges.get(i).getLabel().setTextFill(Color.BLACK);
             }
+        }
+        for (int i = 0; i < vertexes.size(); i++) {
+            vertexes.elementAt(i).getVertex().setFill(Color.DARKSLATEBLUE);
         }
     }
     private void removeVertex(VertexView vertex, AnchorPane field) {
@@ -211,6 +228,24 @@ public class GraphView extends Observable {
             field.getChildren().remove(vertex.getVertex());
             field.getChildren().remove(vertex.getLabel());
             vertexes.remove(vertex);
+        }
+    }
+
+    public void removeVertex(String vertexName, AnchorPane field) {
+        for(int i = 0; i < edges.size(); i++) {
+            EdgeView edge = edges.elementAt(i);
+            String v1 = edge.getFrom().getVertex().getAccessibleText(), v2 = edge.getTo().getVertex().getAccessibleText();
+            if(v1.equals(vertexName) || v2.equals(vertexName)) {
+                notify(Level.INPUT, "Delete edge " + edges.elementAt(i).getFrom() + " " + edges.elementAt(i).getTo());
+                edges.remove(edge);
+                edge.getFrom().decDeg();
+                edge.getTo().decDeg();
+                removeVertex(edge.getFrom(), field);
+                removeVertex(edge.getTo(), field);
+                field.getChildren().remove(edge.getEdge());
+                field.getChildren().remove(edge.getLabel());
+                defaultColor();
+            }
         }
     }
 

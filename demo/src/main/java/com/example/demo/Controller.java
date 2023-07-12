@@ -2,16 +2,17 @@ package com.example.demo;
 
 import java.io.*;
 import java.net.URL;
-import java.nio.file.FileAlreadyExistsException;
 import java.util.ResourceBundle;
 
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextArea;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.input.ZoomEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
@@ -61,6 +62,8 @@ public class Controller extends Observable {
     @FXML
     private TextArea logging;
 
+    private AlgorithmView algorithmView;
+
     private GraphView graphView = new GraphView();
 
 
@@ -71,7 +74,6 @@ public class Controller extends Observable {
         Scene dialog = new Scene(fxmlLoader.load(), 320, 240);
         Stage stage = new Stage();
         stage.setScene(dialog);
-        //reader.setAction(str);
         ((Dialog)fxmlLoader.getController()).setReader(reader);
         ((Dialog)fxmlLoader.getController()).setObserver(obs);
         stage.showAndWait();
@@ -84,19 +86,15 @@ public class Controller extends Observable {
             graphView.counter_add(reader.getV1(), reader.getV2(), reader.getW(), field);
             addBtn.setText("Готово");
             notify(Level.CLUE, "Add " + graphView.getCounter_to_add() + "vertexes by click");
+            algorithmView = null;
         }
     }
 
-    @FXML
-    void addCircle(double x, double y) {
-        Circle circle = new Circle();
-        circle.setCenterX(x);
-        circle.setCenterY(y);
-
+    private EventHandler <MouseEvent> moveField(Circle circle) {
         EventHandler<MouseEvent> eventHandler = new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent e) {
-                if(mvBtn.getText().equals("Готово") && circle.getFill().equals(Color.ROSYBROWN)) {
+                if(e.getEventType().equals(MouseEvent.MOUSE_MOVED) && mvBtn.getText().equals("Готово") && circle.getFill().equals(Color.ROSYBROWN)) {
                     circle.setCenterY(e.getSceneY() - field.getLayoutY());
                     circle.setCenterX(e.getSceneX() - field.getLayoutX());
                     graphView.updateEdges(circle);
@@ -105,22 +103,32 @@ public class Controller extends Observable {
                 }
             }
         };
-
-        EventHandler<MouseEvent> eventHandlerClick = new EventHandler<MouseEvent>() {
+        return eventHandler;
+    }
+    boolean canClickForMove = false;
+    private EventHandler <MouseEvent> clickCircle(Circle circle) {
+        EventHandler<MouseEvent> eventHandler = new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent e) {
-                if(circle.getFill().equals(Color.ROSYBROWN)) {
-                    System.out.println("clicked");
-                    circle.setFill(Color.DARKSLATEBLUE);
-                    circle.setOnMouseMoved(null);
-                } else if(mvBtn.getText().equals("Готово")){
-                    circle.setOnMouseMoved(eventHandler);
+                if(mvBtn.getText().equals("Готово") && !circle.getFill().equals(Color.ROSYBROWN)){
+                    field.setOnMouseMoved(moveField(circle));
                     circle.setFill(Color.ROSYBROWN);
+                    canClickForMove = false;
+                } else {
+                    circle.setFill(Color.DARKSLATEBLUE);
+                    field.setOnMouseMoved(null);
+                    canClickForMove = true;
                 }
             }
         };
-        circle.setOnMouseClicked(eventHandlerClick);
-        //circle.addEventFilter(MouseEvent.MOUSE_ENTERED, eventHandlerClick);
+        return eventHandler;
+    }
+    @FXML
+    void addCircle(double x, double y) {
+        Circle circle = new Circle();
+        circle.setCenterX(x);
+        circle.setCenterY(y);
+        circle.setOnMouseClicked(clickCircle(circle));
         circle.setRadius(15);
         field.getChildren().add(circle);
         graphView.addCircle(circle, field);
@@ -134,8 +142,17 @@ public class Controller extends Observable {
             //if()
             String name = reader.getV1();
             addCircle(x, y);
-        } else {
+        } else if(addBtn.getText().equals("Готово")){
             addBtn.setText("Добавить");
+        } else if(mvBtn.getText().equals("Готово") && canClickForMove){
+            for(Node node : field.getChildren()) {
+                if(node instanceof Circle && ((Circle)node).getFill().equals(Color.ROSYBROWN) ) {
+                    ((Circle) node).setFill(Color.DARKSLATEBLUE);
+                    field.setOnMouseMoved(null);
+                }
+            }
+        } else {
+            canClickForMove = true;
         }
     }
 
@@ -151,6 +168,7 @@ public class Controller extends Observable {
         if(selectedFile != null) {
             reader = new FileReader(selectedFile);
             graphView = new GraphView();
+            algorithmView = null;
             graphView.setObserver(obs);
             field.getChildren().clear();
             logging.clear();
@@ -183,23 +201,40 @@ public class Controller extends Observable {
 
     @FXML
     void nextStep(MouseEvent event) {
-
+        if(algorithmView != null) {
+            graphView.defaultColor();
+            algorithmView.next();
+            notify(Level.ALGORITHM,"Candidates\n" + algorithmView.nextStepCandidate());
+            notify(Level.ALGORITHM,"Included\n" + algorithmView.nextStepIncluded());
+            graphView.colorResult(algorithmView.nextStepCandidate(), Color.LIGHTGREEN);
+            graphView.colorResult(algorithmView.nextStepIncluded(), Color.BLUE);
+            graphView.colorVertexes(algorithmView.nextStepVertex(), Color.BLUE);
+        } else {
+            notify(Level.ERROR, "Please, click start");
+        }
     }
 
     @FXML
     void remove(MouseEvent event) throws IOException {
         dialog("remover.fxml");
         String v1 = reader.getV1(), v2 = reader.getV2();
-        graphView.removeEdge(v1, v2, field);
+        if(!v1.equals(v2))
+            graphView.removeEdge(v1, v2, field);
+        else
+            graphView.removeVertex(v1, field);
+        algorithmView = null;
     }
 
     @FXML
     void result(MouseEvent event) {
-        Prim prim = new Prim(graphView.initGraph().getGraph());
-        prim.run();
-        String primRes = prim.mstToString();
-        notify(Level.ALGORITHM,"\n" + primRes);
-        graphView.primResult(primRes);
+        if(algorithmView == null) {
+            notify(Level.ERROR, "Please, click start");
+            return;
+        }
+        graphView.defaultColor();
+        notify(Level.ALGORITHM,"\n" + algorithmView.getResult());
+        graphView.colorResult(algorithmView.getResult(), Color.BLUE);
+        graphView.colorVertexes(algorithmView.getGraph(), Color.BLUE);
     }
 
     @FXML
@@ -221,8 +256,23 @@ public class Controller extends Observable {
     }
 
     @FXML
-    void start(MouseEvent event) {
+    void start(MouseEvent event) throws IOException {
         startBtn.setText("Готово");
+        dialog("start.fxml");
+        notify(Level.ALGORITHM, "Start vertex chosen " + reader.getV1());
+        Prim prim = new Prim((graphView.initGraph()).getGraph());
+        algorithmView = new AlgorithmView(prim);
+        algorithmView.setObserver(obs);
+        algorithmView.start(reader.getV1());
+        graphView.defaultColor();
+    }
+
+
+    @FXML
+    void resizeScene(ZoomEvent event) {
+        System.out.println("resize");
+        logging.setPrefWidth(scene.getWidth() / 5);
+        logging.setPrefHeight(scene.getHeight() / 3);
     }
 
     @FXML
@@ -237,11 +287,11 @@ public class Controller extends Observable {
         assert startBtn != null : "fx:id=\"startBtn\" was not injected: check your FXML file 'hello-view.fxml'.";
         assert field != null : "fx:id=\"field\" was not injected: check your FXML file 'hello-view.fxml'.";
         assert logging != null : "fx:id=\"logging\" was not injected: check your FXML file 'hello-view.fxml'.";
+        logging.clear();
         if(logging != null) reader = new AppReader(logging);
         obs = new ObserverTextArea();
         ((ObserverTextArea)obs).setTextArea(logging);
         notify(Level.INPUT, "Sucsess");
         graphView.setObserver(obs);
-
     }
 }

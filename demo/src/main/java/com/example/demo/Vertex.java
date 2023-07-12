@@ -68,16 +68,16 @@ public class Vertex {
     }
 
     //Начальный граф
-    public String originalToStr(){
+    public String originalToStr() {
         StringBuilder str = new StringBuilder();
         Iterator<Map.Entry<Vertex,Edge>> it = edges.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry<Vertex,Edge> pair = it.next();
             if (!pair.getValue().isPrinted()) {
                 str.append(getLabel()); //u – вершина из которой исходит ребро
-                str.append("  ");
+                str.append(" ");
                 str.append(pair.getKey().getLabel()); //v – вершина куда направлено ребро
-                str.append("  ");
+                str.append(" ");
                 str.append(pair.getValue().getWeight()); //w - число, вес ребра между ними.
                 str.append("\n");
                 pair.getValue().setPrinted(true);
@@ -85,6 +85,7 @@ public class Vertex {
         }
         return str.toString();
     }
+
 
 
     public String includedToStr(){
@@ -96,9 +97,9 @@ public class Vertex {
                 if (pair.getValue().isIncluded()) {
                     if (!pair.getValue().isPrinted()) {
                         str.append(getLabel()); //u – вершина из которой исходит ребро
-                        str.append("  ");
+                        str.append(" ");
                         str.append(pair.getKey().getLabel()); //v – вершина куда направлено ребро
-                        str.append("  ");
+                        str.append(" ");
                         str.append(pair.getValue().getWeight()); //w - число, вес ребра между ними.
                         str.append("\n");
                         pair.getValue().setPrinted(true);
