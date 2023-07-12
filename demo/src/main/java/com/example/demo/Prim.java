@@ -38,6 +38,14 @@ public class Prim {
 
     private Vector <String > candidateEdges = new Vector<String >();
 
+    public String getGrayStep(int step) {
+        if(grayEdges.isEmpty())
+            return null;
+        return grayEdges.elementAt(step % grayEdges.size());
+    }
+
+    private Vector <String > grayEdges = new Vector<String >();
+
     private void addVertexStep() {
         StringBuilder sb = new StringBuilder();
         StringBuilder edges_candidate = new StringBuilder();
@@ -55,6 +63,8 @@ public class Prim {
         }
         return false;
     }
+
+
     private void addEdgesCandidate() {
         StringBuilder sb = new StringBuilder();
         Vector <String> vertexes = new Vector<String >();
@@ -68,6 +78,19 @@ public class Prim {
             }
         }
         candidateEdges.add(sb.toString());
+    }
+
+    private void grayEdgesStep() {
+        StringBuilder sb = new StringBuilder();
+        for(Vertex vertex : graph) {
+            if(isVertexIncluded(vertex)) {
+                for(Map.Entry <Vertex, Edge> neigb : vertex.getEdges().entrySet()) {
+                    if(isVertexIncluded(neigb.getKey()) && !neigb.getValue().isIncluded())
+                        sb.append(vertex.getLabel()).append(" ").append(neigb.getKey().getLabel()).append("\n");
+                }
+            }
+        }
+        grayEdges.add(sb.toString());
     }
 
     private void addIncluded() {
@@ -103,6 +126,7 @@ public class Prim {
             addVertexStep();
             addIncluded();
             addEdgesCandidate();
+            grayEdgesStep();
             Edge nextMinimum = new Edge(Integer.MAX_VALUE);
             Vertex nextVertex = graph.get(startPos);
             for (Vertex vertex : graph) { //Цикл продолжается до тех пор, пока не будут посещены все вершины
@@ -119,6 +143,8 @@ public class Prim {
         }
         addVertexStep();
         addIncluded();
+        addEdgesCandidate();
+        grayEdgesStep();
     }
 
     public int getSize() {

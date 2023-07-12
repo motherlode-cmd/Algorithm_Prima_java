@@ -232,20 +232,17 @@ public class GraphView extends Observable {
     }
 
     public void removeVertex(String vertexName, AnchorPane field) {
+        Vector <String > toDelete = new Vector<String>();
         for(int i = 0; i < edges.size(); i++) {
             EdgeView edge = edges.elementAt(i);
             String v1 = edge.getFrom().getVertex().getAccessibleText(), v2 = edge.getTo().getVertex().getAccessibleText();
             if(v1.equals(vertexName) || v2.equals(vertexName)) {
-                notify(Level.INPUT, "Delete edge " + edges.elementAt(i).getFrom() + " " + edges.elementAt(i).getTo());
-                edges.remove(edge);
-                edge.getFrom().decDeg();
-                edge.getTo().decDeg();
-                removeVertex(edge.getFrom(), field);
-                removeVertex(edge.getTo(), field);
-                field.getChildren().remove(edge.getEdge());
-                field.getChildren().remove(edge.getLabel());
-                defaultColor();
+                toDelete.add(v1);
+                toDelete.add(v2);
             }
+        }
+        for(int i = 0; i < toDelete.size(); i+=2) {
+            removeEdge(toDelete.elementAt(i), toDelete.elementAt(i + 1), field);
         }
     }
 

@@ -84,7 +84,8 @@ public class Controller extends Observable {
         dialog("dialog.fxml");
         if( !reader.getV1().isEmpty() && !reader.getV2().isEmpty() && reader.getW() != 0 ) {
             graphView.counter_add(reader.getV1(), reader.getV2(), reader.getW(), field);
-            addBtn.setText("Готово");
+            if(graphView.getCounter_to_add() > 0)
+                addBtn.setText("Готово");
             notify(Level.CLUE, "Add " + graphView.getCounter_to_add() + "vertexes by click");
             algorithmView = null;
         }
@@ -142,6 +143,8 @@ public class Controller extends Observable {
             //if()
             String name = reader.getV1();
             addCircle(x, y);
+            if(graphView.getCounter_to_add() == 0)
+                addBtn.setText("Добавить");
         } else if(addBtn.getText().equals("Готово")){
             addBtn.setText("Добавить");
         } else if(mvBtn.getText().equals("Готово") && canClickForMove){
@@ -206,9 +209,14 @@ public class Controller extends Observable {
             algorithmView.next();
             notify(Level.ALGORITHM,"Candidates\n" + algorithmView.nextStepCandidate());
             notify(Level.ALGORITHM,"Included\n" + algorithmView.nextStepIncluded());
+            graphView.colorResult(algorithmView.nextGrayEdges(), Color.LIGHTGRAY);
             graphView.colorResult(algorithmView.nextStepCandidate(), Color.LIGHTGREEN);
             graphView.colorResult(algorithmView.nextStepIncluded(), Color.BLUE);
             graphView.colorVertexes(algorithmView.nextStepVertex(), Color.BLUE);
+            if(algorithmView.isResult())
+                nextBtn.setText("Начать с 0");
+            else
+                nextBtn.setText("Следующий шаг");
         } else {
             notify(Level.ERROR, "Please, click start");
         }
@@ -235,17 +243,19 @@ public class Controller extends Observable {
         notify(Level.ALGORITHM,"\n" + algorithmView.getResult());
         graphView.colorResult(algorithmView.getResult(), Color.BLUE);
         graphView.colorVertexes(algorithmView.getGraph(), Color.BLUE);
+        graphView.colorResult(algorithmView.nextGrayEdges(), Color.LIGHTGRAY);
     }
 
     @FXML
     void save(MouseEvent event) throws IOException {
         Stage primaryStage = new Stage();
         FileChooser fileChooser = new FileChooser();
+        //fileChooser.setMode(FileChooserMode.save);
         fileChooser.setTitle("Save Document");//Заголовок диалога
         FileChooser.ExtensionFilter extFilter =
                 new FileChooser.ExtensionFilter("TXT", "*.txt");//Расширение
         fileChooser.getExtensionFilters().add(extFilter);
-        File file = fileChooser.showOpenDialog(primaryStage);
+        File file = fileChooser.showSaveDialog(primaryStage);
         try {
             FileWriter fw = new FileWriter(file);
             fw.write(graphView.toString());
@@ -257,14 +267,18 @@ public class Controller extends Observable {
 
     @FXML
     void start(MouseEvent event) throws IOException {
-        startBtn.setText("Готово");
-        dialog("start.fxml");
-        notify(Level.ALGORITHM, "Start vertex chosen " + reader.getV1());
-        Prim prim = new Prim((graphView.initGraph()).getGraph());
-        algorithmView = new AlgorithmView(prim);
-        algorithmView.setObserver(obs);
-        algorithmView.start(reader.getV1());
-        graphView.defaultColor();
+        Graph graph = graphView.initGraph();
+        if(graph.countComponent()) {
+            dialog("start.fxml");
+            notify(Level.ALGORITHM, "Start vertex chosen " + reader.getV1());
+            Prim prim = new Prim((graphView.initGraph()).getGraph());
+            algorithmView = new AlgorithmView(prim);
+            algorithmView.setObserver(obs);
+            algorithmView.start(reader.getV1());
+            graphView.defaultColor();
+        } else {
+            notify(Level.ERROR, "Bad graph");
+        }
     }
 
 
@@ -288,6 +302,8 @@ public class Controller extends Observable {
         assert field != null : "fx:id=\"field\" was not injected: check your FXML file 'hello-view.fxml'.";
         assert logging != null : "fx:id=\"logging\" was not injected: check your FXML file 'hello-view.fxml'.";
         logging.clear();
+        logging.prefWidthProperty().bind(scene.widthProperty().divide(2.5));
+        logging.prefHeightProperty().bind(scene.heightProperty().divide(2.5));
         if(logging != null) reader = new AppReader(logging);
         obs = new ObserverTextArea();
         ((ObserverTextArea)obs).setTextArea(logging);

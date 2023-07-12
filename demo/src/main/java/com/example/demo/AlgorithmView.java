@@ -38,14 +38,19 @@ public class AlgorithmView extends Observable{
         return prim.getCandidateStep(step);
     }
 
-    public void next() {
-        step = (step + 1) % getSize();
-        notify(Level.ALGORITHM, "Step number " + step);
+    public String nextGrayEdges() {
+        return prim.getGrayStep(step);
     }
-    public int getSize() {
+    public void next() {
+        notify(Level.ALGORITHM, "Step number " + step);
+        step = (step + 1) % getSize();
+    }
+    private int getSize() {
         return prim.getSize();
     }
-
+    public boolean isResult() {
+        return result.split("\n").length == nextStepIncluded().split("\n").length;
+    }
     public String getGraph() {
         return prim.getIncludedVertexStep(prim.getSize() - 1);
     }
