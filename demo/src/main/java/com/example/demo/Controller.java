@@ -205,18 +205,19 @@ public class Controller extends Observable {
     @FXML
     void nextStep(MouseEvent event) {
         if(algorithmView != null) {
-            graphView.defaultColor();
             algorithmView.next();
-            notify(Level.ALGORITHM,"Candidates\n" + algorithmView.nextStepCandidate());
-            notify(Level.ALGORITHM,"Included\n" + algorithmView.nextStepIncluded());
+            graphView.defaultColor();
             graphView.colorResult(algorithmView.nextGrayEdges(), Color.LIGHTGRAY);
             graphView.colorResult(algorithmView.nextStepCandidate(), Color.LIGHTGREEN);
             graphView.colorResult(algorithmView.nextStepIncluded(), Color.BLUE);
             graphView.colorVertexes(algorithmView.nextStepVertex(), Color.BLUE);
-            if(algorithmView.isResult())
+            notify(Level.ALGORITHM, "Включенные в МОД вершины на шаге\n" + algorithmView.nextStepVertex());
+            if(algorithmView.isResult()) {
                 nextBtn.setText("Начать с 0");
-            else
+                result(event);
+            } else {
                 nextBtn.setText("Следующий шаг");
+            }
         } else {
             notify(Level.ERROR, "Please, click start");
         }
@@ -240,7 +241,7 @@ public class Controller extends Observable {
             return;
         }
         graphView.defaultColor();
-        notify(Level.ALGORITHM,"\n" + algorithmView.getResult());
+        notify(Level.ALGORITHM,"\nРезультт работы алгоритма. Множество включенных в МОД рбер :\n" + algorithmView.getResult());
         graphView.colorResult(algorithmView.getResult(), Color.BLUE);
         graphView.colorVertexes(algorithmView.getGraph(), Color.BLUE);
         graphView.colorResult(algorithmView.nextGrayEdges(), Color.LIGHTGRAY);
@@ -265,6 +266,7 @@ public class Controller extends Observable {
         }
     }
 
+
     @FXML
     void start(MouseEvent event) throws IOException {
         Graph graph = graphView.initGraph();
@@ -276,11 +278,15 @@ public class Controller extends Observable {
             algorithmView.setObserver(obs);
             algorithmView.start(reader.getV1());
             graphView.defaultColor();
+            graphView.colorResult(algorithmView.nextGrayEdges(), Color.LIGHTGRAY);
+            graphView.colorResult(algorithmView.nextStepCandidate(), Color.LIGHTGREEN);
+            graphView.colorResult(algorithmView.nextStepIncluded(), Color.BLUE);
+            graphView.colorVertexes(algorithmView.nextStepVertex(), Color.BLUE);
+            notify(Level.ALGORITHM, "Старт работы алгоритма. Первая вершина " + algorithmView.nextStepVertex());
         } else {
             notify(Level.ERROR, "Bad graph");
         }
     }
-
 
     @FXML
     void resizeScene(ZoomEvent event) {

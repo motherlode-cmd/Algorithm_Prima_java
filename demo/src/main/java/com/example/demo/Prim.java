@@ -48,7 +48,6 @@ public class Prim {
 
     private void addVertexStep() {
         StringBuilder sb = new StringBuilder();
-        StringBuilder edges_candidate = new StringBuilder();
         for(int i = 0; i < graph.size(); i++)
             if(graph.get(i).isVisited()) {
                 sb.append(graph.get(i).getLabel()).append(" ");
@@ -56,6 +55,8 @@ public class Prim {
         includedVertexStep.add(sb.toString());
     }
     private boolean isVertexIncluded(Vertex vertex) {
+        if(vertex.getLabel().equals(startVertex))
+            return true;
         for(Map.Entry <Vertex, Edge> neigbohour : vertex.getEdges().entrySet()) {
             if(neigbohour.getValue().isIncluded()) {
                 return true;
@@ -69,26 +70,29 @@ public class Prim {
         StringBuilder sb = new StringBuilder();
         Vector <String> vertexes = new Vector<String >();
         for(Vertex vertex: graph) {
-            if(vertex.isVisited() && isVertexIncluded(vertex)) {
+            if(isVertexIncluded(vertex)) {
                 for(Map.Entry <Vertex, Edge> neigbohour : vertex.getEdges().entrySet()) {
-                    if(!neigbohour.getValue().isIncluded() && !neigbohour.getKey().isVisited()) {
+                    if(!neigbohour.getValue().isIncluded() && !isVertexIncluded(neigbohour.getKey()) ) {
                         sb.append(vertex.getLabel()).append(" ").append(neigbohour.getKey().getLabel()).append("\n");
                     }
                 }
             }
+            vertexes.add(vertex.getLabel());
         }
         candidateEdges.add(sb.toString());
     }
 
     private void grayEdgesStep() {
         StringBuilder sb = new StringBuilder();
+        Vector <String> vertexes = new Vector<String>();
         for(Vertex vertex : graph) {
             if(isVertexIncluded(vertex)) {
                 for(Map.Entry <Vertex, Edge> neigb : vertex.getEdges().entrySet()) {
-                    if(isVertexIncluded(neigb.getKey()) && !neigb.getValue().isIncluded())
+                    if(isVertexIncluded(neigb.getKey()) && !neigb.getValue().isIncluded() && !vertexes.contains(neigb.getKey().getLabel()) )
                         sb.append(vertex.getLabel()).append(" ").append(neigb.getKey().getLabel()).append("\n");
                 }
             }
+            vertexes.add(vertex.getLabel());
         }
         grayEdges.add(sb.toString());
     }
@@ -111,7 +115,7 @@ public class Prim {
     }
 
 
-
+    String startVertex = "";
     public void run(String start) {
         //Устанавливаем первому элементу графа List<Vertex> статус посещенного
         //Первым элементом может быть любая из вершин в зависимости от порядка их добавления в список в приоритетную очередь
@@ -122,6 +126,11 @@ public class Prim {
         if (graph.size() > 0){
             graph.get(startPos).setVisited(true);
         }
+        startVertex = graph.get(startPos).getLabel();
+        includedVertexStep.add(graph.get(startPos).getLabel());
+        candidateEdges.add("");
+        grayEdges.add("");
+        includedEdgesStep.add("");
         while (isViewedVertex()){
             addVertexStep();
             addIncluded();
@@ -155,6 +164,10 @@ public class Prim {
             if(graph.get(i).getLabel().equals(s))
                 return graph.get(i).originalToStr();
         return null;
+    }
+
+    public boolean isResult(String str) {
+        return str.split(" ").length == graph.size();
     }
 
     //Вершину уже просмотрели
