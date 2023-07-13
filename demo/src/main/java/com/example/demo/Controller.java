@@ -10,10 +10,15 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ZoomEvent;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.ColumnConstraints;
+import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.GridPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.stage.FileChooser;
@@ -62,7 +67,13 @@ public class Controller extends Observable {
     @FXML
     private TextArea logging;
 
+    @FXML
+    private GridPane table;
+
     private AlgorithmView algorithmView;
+
+    @FXML
+    private FlowPane tablePane;
 
     private GraphView graphView = new GraphView();
 
@@ -88,6 +99,7 @@ public class Controller extends Observable {
                 addBtn.setText("Готово");
             notify(Level.CLUE, "Add " + graphView.getCounter_to_add() + "vertexes by click");
             algorithmView = null;
+            table.setVisible(false);
         }
     }
 
@@ -172,6 +184,7 @@ public class Controller extends Observable {
             reader = new FileReader(selectedFile);
             graphView = new GraphView();
             algorithmView = null;
+            table.setVisible(false);
             graphView.setObserver(obs);
             field.getChildren().clear();
             logging.clear();
@@ -206,16 +219,17 @@ public class Controller extends Observable {
     void nextStep(MouseEvent event) {
         if(algorithmView != null) {
             algorithmView.next();
-            graphView.defaultColor();
-            notify(Level.ALGORITHM, "Включенные в МОД вершины\n" + algorithmView.nextStepVertex());
-            graphView.colorVertexes(algorithmView.nextStepVertex(), Color.BLUE);
-            graphView.colorResult(algorithmView.nextStepIncluded(), Color.BLUE);
-            graphView.colorResult(algorithmView.nextStepCandidate(), Color.LIGHTGREEN);
-            graphView.colorResult(algorithmView.nextGrayEdges(), Color.LIGHTGRAY);
+            algorithmView.info();
             if(algorithmView.isResult()) {
                 nextBtn.setText("Начать с 0");
                 result(event);
             } else {
+                graphView.defaultColor();
+                notify(Level.ALGORITHM, "Включенные в МОД вершины\n" + algorithmView.nextStepVertex());
+                graphView.colorVertexes(algorithmView.nextStepVertex(), Color.BLUE);
+                graphView.colorResult(algorithmView.nextStepIncluded(), Color.BLUE);
+                graphView.colorResult(algorithmView.nextStepCandidate(), Color.LIGHTGREEN);
+                graphView.colorResult(algorithmView.nextGrayEdges(), Color.LIGHTGRAY);
                 nextBtn.setText("Следующий шаг");
             }
         } else {
@@ -232,6 +246,7 @@ public class Controller extends Observable {
         else
             graphView.removeVertex(v1, field);
         algorithmView = null;
+        table.setVisible(false);
     }
 
     @FXML
@@ -275,6 +290,7 @@ public class Controller extends Observable {
             notify(Level.ALGORITHM, "Start vertex chosen " + reader.getV1());
             Prim prim = new Prim((graphView.initGraph()).getGraph());
             algorithmView = new AlgorithmView(prim);
+            table.setVisible(true);
             algorithmView.setObserver(obs);
             algorithmView.start(reader.getV1());
             graphView.defaultColor();
@@ -283,11 +299,31 @@ public class Controller extends Observable {
             graphView.colorResult(algorithmView.nextStepCandidate(), Color.LIGHTGREEN);
             graphView.colorResult(algorithmView.nextGrayEdges(), Color.LIGHTGRAY);
             notify(Level.ALGORITHM, "Старт работы алгоритма.\n Первая вершина " + algorithmView.nextStepVertex());
+            //initTable();
         } else {
             notify(Level.ERROR, "Bad graph");
         }
     }
+    void initTable() {
+        //table = new GridPane();
+        String [] vertexes = algorithmView.getGraph().split(" ");
+        int numColumns = vertexes.length; // Количество столбцов
+        ColumnConstraints columnConstraints = new ColumnConstraints();
+        columnConstraints.setPercentWidth(90.0 / numColumns); // Распределение на равные столбцы
 
+        for (int i = 0; i < numColumns; i++) {
+            table.getColumnConstraints().add(columnConstraints);
+        }
+
+        for(int i = 0; i < numColumns; i++) {
+            Label label = new Label();
+            label.setStyle("-fx-text-fill: black; -fx-font-size: 16;");
+            label.setText(vertexes[i]);
+            table.add(label,  i, 0);
+        }
+        table.setGridLinesVisible(true);
+        table.setOpacity(1.0);
+    }
     @FXML
     void resizeScene(ZoomEvent event) {
         System.out.println("resize");
@@ -307,11 +343,20 @@ public class Controller extends Observable {
         assert startBtn != null : "fx:id=\"startBtn\" was not injected: check your FXML file 'hello-view.fxml'.";
         assert field != null : "fx:id=\"field\" was not injected: check your FXML file 'hello-view.fxml'.";
         assert logging != null : "fx:id=\"logging\" was not injected: check your FXML file 'hello-view.fxml'.";
+        assert tablePane != null : "fx:id=\"tablePane\" was not injected: check your FXML file 'hello-view.fxml'.";
+        assert table != null : "fx:id=\"table\" was not injected: check your FXML file 'hello-view.fxml'.";
         logging.clear();
         logging.prefWidthProperty().bind(scene.widthProperty().divide(2));
         logging.prefHeightProperty().bind(scene.heightProperty().divide(3));
         field.prefHeightProperty().bind(scene.heightProperty().divide(3).multiply(2));
         field.prefWidthProperty().bind(scene.widthProperty().divide(2));
+        //tablePane.prefHeightProperty().bind(scene.heightProperty().divide(5));
+        //tablePane.prefWidthProperty().bind(scene.widthProperty().divide(2.3));
+        // Установите ограничения для размеров GridPane
+        table.prefWidthProperty().bind(tablePane.widthProperty());
+        table.prefHeightProperty().bind(tablePane.heightProperty());
+
+        table.setVisible(false);
         if(logging != null) reader = new AppReader(logging);
         obs = new ObserverTextArea();
         ((ObserverTextArea)obs).setTextArea(logging);

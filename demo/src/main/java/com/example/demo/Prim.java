@@ -10,6 +10,8 @@ public class Prim {
     //Внутри каждой вершины у нас есть Map<Vertex, Edge>
     private List<Vertex> graph;
 
+    private Vector <String> cost = new Vector<String>();
+
     public Prim(List<Vertex> graph){
         this.graph = graph;
     }
@@ -65,6 +67,17 @@ public class Prim {
         return false;
     }
 
+    public double getCost(String u, String v) {
+        for(int i = 0; i < graph.size(); i++) {
+            if(graph.get(i).getLabel().equals(u)) {
+                for(Map.Entry <Vertex, Edge> curr : graph.get(i).getEdges().entrySet()) {
+                    if(curr.getKey().getLabel().equals(v))
+                        return curr.getValue().getWeight();
+                }
+            }
+        }
+        return 0;
+    }
 
     private void addEdgesCandidate() {
         StringBuilder sb = new StringBuilder();
@@ -113,7 +126,9 @@ public class Prim {
 
         includedEdgesStep.add(sb.toString());
     }
-
+    public Vector <String> includedCost() {
+        return cost;
+    }
 
     String startVertex = "";
     public void run(String start) {
@@ -131,6 +146,7 @@ public class Prim {
         candidateEdges.add("");
         grayEdges.add("");
         includedEdgesStep.add("");
+        cost.add("0 " + graph.get(startPos).getLabel());
         while (isViewedVertex()){
             addVertexStep();
             addIncluded();
@@ -147,7 +163,9 @@ public class Prim {
                     }
                 }
             }
+
             nextMinimum.setIncluded(true);
+            cost.add(nextMinimum.getWeight() + " " + nextVertex.getLabel());
             nextVertex.setVisited(true);
         }
         addVertexStep();
@@ -208,6 +226,13 @@ public class Prim {
             sb.append(vertex.includedToStr());
         }
         return sb.toString();
+    }
+
+    public Vector <String> getVertexName() {
+        Vector <String> nemas = new Vector<String>();
+        for(int i = 0; i < graph.size(); i++)
+            nemas.add(graph.get(i).getLabel());
+        return nemas;
     }
 
 }
