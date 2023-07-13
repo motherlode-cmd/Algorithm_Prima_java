@@ -207,11 +207,11 @@ public class Controller extends Observable {
         if(algorithmView != null) {
             algorithmView.next();
             graphView.defaultColor();
-            graphView.colorResult(algorithmView.nextGrayEdges(), Color.LIGHTGRAY);
-            graphView.colorResult(algorithmView.nextStepCandidate(), Color.LIGHTGREEN);
-            graphView.colorResult(algorithmView.nextStepIncluded(), Color.BLUE);
+            notify(Level.ALGORITHM, "Включенные в МОД вершины\n" + algorithmView.nextStepVertex());
             graphView.colorVertexes(algorithmView.nextStepVertex(), Color.BLUE);
-            notify(Level.ALGORITHM, "Включенные в МОД вершины на шаге\n" + algorithmView.nextStepVertex());
+            graphView.colorResult(algorithmView.nextStepIncluded(), Color.BLUE);
+            graphView.colorResult(algorithmView.nextStepCandidate(), Color.LIGHTGREEN);
+            graphView.colorResult(algorithmView.nextGrayEdges(), Color.LIGHTGRAY);
             if(algorithmView.isResult()) {
                 nextBtn.setText("Начать с 0");
                 result(event);
@@ -241,10 +241,10 @@ public class Controller extends Observable {
             return;
         }
         graphView.defaultColor();
-        notify(Level.ALGORITHM,"\nРезультт работы алгоритма. Множество включенных в МОД рбер :\n" + algorithmView.getResult());
         graphView.colorResult(algorithmView.getResult(), Color.BLUE);
         graphView.colorVertexes(algorithmView.getGraph(), Color.BLUE);
         graphView.colorResult(algorithmView.nextGrayEdges(), Color.LIGHTGRAY);
+        notify(Level.ALGORITHM,"\nРезультт работы алгоритма.\nМножество включенных в МОД рбер :\n" + algorithmView.getResult());
     }
 
     @FXML
@@ -278,11 +278,11 @@ public class Controller extends Observable {
             algorithmView.setObserver(obs);
             algorithmView.start(reader.getV1());
             graphView.defaultColor();
-            graphView.colorResult(algorithmView.nextGrayEdges(), Color.LIGHTGRAY);
-            graphView.colorResult(algorithmView.nextStepCandidate(), Color.LIGHTGREEN);
-            graphView.colorResult(algorithmView.nextStepIncluded(), Color.BLUE);
             graphView.colorVertexes(algorithmView.nextStepVertex(), Color.BLUE);
-            notify(Level.ALGORITHM, "Старт работы алгоритма. Первая вершина " + algorithmView.nextStepVertex());
+            graphView.colorResult(algorithmView.nextStepIncluded(), Color.BLUE);
+            graphView.colorResult(algorithmView.nextStepCandidate(), Color.LIGHTGREEN);
+            graphView.colorResult(algorithmView.nextGrayEdges(), Color.LIGHTGRAY);
+            notify(Level.ALGORITHM, "Старт работы алгоритма.\n Первая вершина " + algorithmView.nextStepVertex());
         } else {
             notify(Level.ERROR, "Bad graph");
         }
@@ -308,8 +308,10 @@ public class Controller extends Observable {
         assert field != null : "fx:id=\"field\" was not injected: check your FXML file 'hello-view.fxml'.";
         assert logging != null : "fx:id=\"logging\" was not injected: check your FXML file 'hello-view.fxml'.";
         logging.clear();
-        logging.prefWidthProperty().bind(scene.widthProperty().divide(2.5));
-        logging.prefHeightProperty().bind(scene.heightProperty().divide(2.5));
+        logging.prefWidthProperty().bind(scene.widthProperty().divide(2));
+        logging.prefHeightProperty().bind(scene.heightProperty().divide(3));
+        field.prefHeightProperty().bind(scene.heightProperty().divide(3).multiply(2));
+        field.prefWidthProperty().bind(scene.widthProperty().divide(2));
         if(logging != null) reader = new AppReader(logging);
         obs = new ObserverTextArea();
         ((ObserverTextArea)obs).setTextArea(logging);

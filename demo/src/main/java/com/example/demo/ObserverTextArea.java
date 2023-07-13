@@ -13,8 +13,10 @@ public class ObserverTextArea implements Observer{
     }
     @Override
     public void update(Level level, String message) {
-        if(textArea != null)
+        if(textArea != null) {
             textArea.setText(textArea.getText() + "\n[" + level.toString() + "]" + message);
+            textArea.setScrollTop(Double.MAX_VALUE);
+        }
     }
 
 }
